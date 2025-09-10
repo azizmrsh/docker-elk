@@ -1,0 +1,10 @@
+Please download the MySQL JDBC driver manually:
+
+1. Go to: https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.0.33/
+2. Download: mysql-connector-j-8.0.33.jar
+3. Place it in this directory: logstash/drivers/
+
+Alternative download link:
+https://dev.mysql.com/downloads/connector/j/
+
+Make sure the file is named: mysql-connector-j-8.0.33.jar

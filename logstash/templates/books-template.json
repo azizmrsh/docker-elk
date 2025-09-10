@@ -1,0 +1,87 @@
+{
+    "index_patterns": [
+        "books-*"
+    ],
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "analysis": {
+            "analyzer": {
+                "arabic_analyzer": {
+                    "type": "standard",
+                    "stopwords": "_arabic_"
+                },
+                "arabic_search": {
+                    "tokenizer": "standard",
+                    "filter": [
+                        "lowercase",
+                        "arabic_normalization",
+                        "arabic_stem"
+                    ]
+                }
+            }
+        }
+    },
+    "mappings": {
+        "properties": {
+            "id": {
+                "type": "keyword"
+            },
+            "title": {
+                "type": "text",
+                "analyzer": "arabic_analyzer",
+                "search_analyzer": "arabic_search",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "author": {
+                "type": "text",
+                "analyzer": "arabic_analyzer",
+                "search_analyzer": "arabic_search",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "description": {
+                "type": "text",
+                "analyzer": "arabic_analyzer",
+                "search_analyzer": "arabic_search"
+            },
+            "content": {
+                "type": "text",
+                "analyzer": "arabic_analyzer",
+                "search_analyzer": "arabic_search"
+            },
+            "pages_content": {
+                "type": "text",
+                "analyzer": "arabic_analyzer",
+                "search_analyzer": "arabic_search"
+            },
+            "category": {
+                "type": "keyword"
+            },
+            "isbn": {
+                "type": "keyword"
+            },
+            "published_date": {
+                "type": "date"
+            },
+            "created_at": {
+                "type": "date"
+            },
+            "updated_at": {
+                "type": "date"
+            },
+            "@timestamp": {
+                "type": "date"
+            }
+        }
+    }
+}

@@ -1,0 +1,68 @@
+{
+  "index_patterns": ["book-pages*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index": {
+        "refresh_interval": "5s"
+      }
+    },
+    "mappings": {
+      "properties": {
+        "page_id": {
+          "type": "keyword"
+        },
+        "book_id": {
+          "type": "keyword"
+        },
+        "page_number": {
+          "type": "integer"
+        },
+        "content": {
+          "type": "text",
+          "analyzer": "arabic",
+          "search_analyzer": "arabic"
+        },
+        "search_text": {
+          "type": "text",
+          "analyzer": "arabic",
+          "search_analyzer": "arabic"
+        },
+        "book_title": {
+          "type": "text",
+          "analyzer": "arabic",
+          "search_analyzer": "arabic",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "author_name": {
+          "type": "text",
+          "analyzer": "arabic",
+          "search_analyzer": "arabic",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "document_title": {
+          "type": "text",
+          "analyzer": "arabic",
+          "search_analyzer": "arabic"
+        },
+        "updated_at": {
+          "type": "date"
+        },
+        "@timestamp": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "priority": 500,
+  "version": 1
+}
