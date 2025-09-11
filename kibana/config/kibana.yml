@@ -1,55 +1,103 @@
 ---
-## Default Kibana configuration from Kibana base image.
-## https://github.com/elastic/kibana/blob/main/src/dev/build/tasks/os_packages/docker_generator/templates/kibana_yml.template.ts
-#
-server.name: kibana
+# ===================================================================
+# ملف إعدادات Kibana الرئيسي
+# ===================================================================
+# هذا الملف يحتوي على الإعدادات الأساسية لـ Kibana
+# المرجع: https://github.com/elastic/kibana/blob/main/src/dev/build/tasks/os_packages/docker_generator/templates/kibana_yml.template.ts
+# ===================================================================
+
+# ===================================================================
+# إعدادات الخادم (Server Settings)
+# ===================================================================
+# اسم خادم Kibana - يظهر في واجهة المستخدم والسجلات
+server.name: bms-kibana-server
+
+# عنوان IP الذي يستمع إليه Kibana
+# 0.0.0.0 يعني الاستماع على جميع واجهات الشبكة (مناسب للحاويات)
 server.host: 0.0.0.0
+
+# ===================================================================
+# إعدادات الاتصال بـ Elasticsearch
+# ===================================================================
+# عناوين خوادم Elasticsearch التي يتصل بها Kibana
+# في Docker Compose، نستخدم اسم الخدمة كعنوان
 elasticsearch.hosts: [ http://elasticsearch:9200 ]
 
+# ===================================================================
+# إعدادات المراقبة (Monitoring Settings)
+# ===================================================================
+# تفعيل مراقبة Elasticsearch في واجهة Kibana
 monitoring.ui.container.elasticsearch.enabled: true
+
+# تفعيل مراقبة Logstash في واجهة Kibana
 monitoring.ui.container.logstash.enabled: true
 
-## Security credentials
-#
+# ===================================================================
+# بيانات اعتماد الأمان (Security Credentials)
+# ===================================================================
+# اسم المستخدم للاتصال بـ Elasticsearch
+# kibana_system هو مستخدم مدمج مخصص لـ Kibana
 elasticsearch.username: kibana_system
+
+# كلمة مرور المستخدم - تأتي من متغير البيئة
+# يتم تعيينها في ملف .env أو عبر خدمة setup
 elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
 
-## Encryption keys (optional but highly recommended)
-##
-## Generate with either
-##  $ docker compose up kibana-genkeys
-##  $ openssl rand -hex 32
-##
-## https://www.elastic.co/docs/deploy-manage/security/self-setup
-## https://www.elastic.co/docs/reference/kibana/commands/kibana-encryption-keys
+# ===================================================================
+# مفاتيح التشفير (Encryption Keys) - اختيارية لكن مستحسنة بشدة
+# ===================================================================
+# هذه المفاتيح تستخدم لتشفير البيانات الحساسة في Kibana
+# يمكن توليدها باستخدام:
+#  $ docker compose up kibana-genkeys
+#  $ openssl rand -hex 32
 #
+# المراجع:
+# https://www.elastic.co/docs/deploy-manage/security/self-setup
+# https://www.elastic.co/docs/reference/kibana/commands/kibana-encryption-keys
+#
+# مفتاح تشفير الأمان العام
 #xpack.security.encryptionKey:
+# مفتاح تشفير الكائنات المحفوظة
 #xpack.encryptedSavedObjects.encryptionKey:
+# مفتاح تشفير التقارير
 #xpack.reporting.encryptionKey:
 
-## Fleet
-## https://www.elastic.co/docs/reference/kibana/configuration-reference/fleet-settings
-#
+# ===================================================================
+# إعدادات Fleet (إدارة Elastic Agents)
+# ===================================================================
+# Fleet هو نظام إدارة مركزي لـ Elastic Agents
+# المرجع: https://www.elastic.co/docs/reference/kibana/configuration-reference/fleet-settings
+# ===================================================================
+
+# عناوين خوادم Fleet Server التي تدير Elastic Agents
 xpack.fleet.agents.fleet_server.hosts: [ http://fleet-server:8220 ]
 
+# ===================================================================
+# إعدادات المخرجات (Outputs Configuration)
+# ===================================================================
+# تحديد وجهات إرسال البيانات من Elastic Agents
 xpack.fleet.outputs:
-  - id: fleet-default-output
-    name: default
-    type: elasticsearch
-    hosts: [ http://elasticsearch:9200 ]
-    is_default: true
-    is_default_monitoring: true
+  - id: fleet-default-output              # معرف المخرج الافتراضي
+    name: default                         # اسم المخرج
+    type: elasticsearch                   # نوع المخرج (Elasticsearch)
+    hosts: [ http://elasticsearch:9200 ]  # عناوين خوادم Elasticsearch
+    is_default: true                      # هذا هو المخرج الافتراضي للبيانات
+    is_default_monitoring: true           # المخرج الافتراضي لبيانات المراقبة
 
+# ===================================================================
+# حزم Fleet المثبتة مسبقاً (Pre-installed Packages)
+# ===================================================================
+# قائمة بالحزم التي يتم تثبيتها تلقائياً مع Fleet
 xpack.fleet.packages:
-  - name: fleet_server
+  - name: fleet_server                    # حزمة Fleet Server الأساسية
+    version: latest                       # أحدث إصدار
+  - name: system                          # حزمة مراقبة النظام
     version: latest
-  - name: system
+  - name: elastic_agent                   # حزمة Elastic Agent الأساسية
     version: latest
-  - name: elastic_agent
+  - name: docker                          # حزمة مراقبة Docker
     version: latest
-  - name: docker
-    version: latest
-  - name: apm
+  - name: apm                             # حزمة Application Performance Monitoring
     version: latest
 
 xpack.fleet.agentPolicies:

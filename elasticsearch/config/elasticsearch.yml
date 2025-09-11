@@ -1,9 +1,62 @@
 ---
-## Default Elasticsearch configuration from Elasticsearch base image.
-## https://github.com/elastic/elasticsearch/blob/main/distribution/docker/src/docker/config/elasticsearch.yml
-#
-cluster.name: docker-cluster
+# ===================================================================
+# ملف إعدادات Elasticsearch الرئيسي
+# ===================================================================
+# هذا الملف يحتوي على الإعدادات الأساسية لـ Elasticsearch
+# المرجع: https://github.com/elastic/elasticsearch/blob/main/distribution/docker/src/docker/config/elasticsearch.yml
+# ===================================================================
+
+# ===================================================================
+# إعدادات الكلاستر (Cluster Settings)
+# ===================================================================
+# اسم الكلاستر - يجب أن يكون نفس الاسم لجميع العقد في نفس الكلاستر
+# القيمة الافتراضية مناسبة للتطوير، في الإنتاج استخدم اسماً وصفياً
+cluster.name: bms-production-cluster
+
+# ===================================================================
+# إعدادات الشبكة (Network Settings)
+# ===================================================================
+# عنوان IP الذي يستمع إليه Elasticsearch
+# 0.0.0.0 يعني الاستماع على جميع واجهات الشبكة (مناسب للحاويات)
+# في الإنتاج، حدد عنوان IP محدد لأمان أفضل
 network.host: 0.0.0.0
 
+# ===================================================================
+# إعدادات X-Pack (الميزات المتقدمة)
+# ===================================================================
+# نوع الترخيص التلقائي - trial يوفر جميع الميزات لمدة 30 يوم
+# البدائل: basic (مجاني مع ميزات محدودة), gold, platinum
 xpack.license.self_generated.type: trial
+
+# تفعيل الأمان في X-Pack
+# true: يفعل المصادقة والتشفير والتحكم في الوصول
+# false: يعطل جميع ميزات الأمان (غير مستحسن في الإنتاج)
 xpack.security.enabled: true
+
+# ===================================================================
+# إعدادات تحسين الأداء المتقدمة (Advanced Performance Settings)
+# ===================================================================
+# تحسين استخدام الذاكرة للفهرسة
+indices.memory.index_buffer_size: 20%
+indices.memory.min_index_buffer_size: 96mb
+
+# تحسين الفهرسة
+index.refresh_interval: 30s
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+# تحسين البحث
+index.search.slowlog.threshold.query.warn: 10s
+index.search.slowlog.threshold.fetch.warn: 1s
+
+# إدارة الذاكرة للبحث
+indices.fielddata.cache.size: 20%
+indices.queries.cache.size: 10%
+
+# تحسين الشبكة
+http.port: 9200
+transport.port: 9300
+
+# إعدادات التخزين
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs

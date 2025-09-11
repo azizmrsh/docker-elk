@@ -1,7 +1,30 @@
+# ===================================================================
+# Dockerfile لبناء صورة Elasticsearch المخصصة
+# ===================================================================
+# هذا الملف يحدد كيفية بناء صورة Docker مخصصة لـ Elasticsearch
+# مع إمكانية إضافة الإضافات والتخصيصات المطلوبة
+# ===================================================================
+
+# تعريف متغير إصدار Elasticsearch كمعامل بناء
+# يمكن تمرير هذا المتغير عند بناء الصورة
 ARG ELASTIC_VERSION
 
-# https://www.docker.elastic.co/
+# ===================================================================
+# الصورة الأساسية (Base Image)
+# ===================================================================
+# استخدام الصورة الرسمية لـ Elasticsearch من Elastic
+# المرجع: https://www.docker.elastic.co/
+# القيمة الافتراضية: 9.1.3 في حالة عدم تحديد الإصدار
 FROM docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.1.3}
 
-# Add your elasticsearch plugins setup here
-# Example: RUN elasticsearch-plugin install analysis-icu
+# ===================================================================
+# تثبيت الإضافات (Plugins Installation)
+# ===================================================================
+# هنا يمكن إضافة أوامر تثبيت الإضافات المطلوبة لـ Elasticsearch
+# مثال: تثبيت إضافة تحليل النصوص الدولية
+# RUN elasticsearch-plugin install analysis-icu
+#
+# إضافات شائعة أخرى:
+# RUN elasticsearch-plugin install analysis-phonetic  # للبحث الصوتي
+# RUN elasticsearch-plugin install mapper-size        # لحفظ حجم الوثائق
+# RUN elasticsearch-plugin install ingest-attachment  # لمعالجة المرفقات

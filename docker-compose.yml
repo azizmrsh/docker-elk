@@ -1,132 +1,200 @@
+# ===================================================================
+# Docker Compose Configuration for ELK Stack (Elasticsearch, Logstash, Kibana)
+# ===================================================================
+# هذا الملف يحتوي على إعدادات Docker Compose لتشغيل مجموعة ELK Stack
+# والتي تتضمن Elasticsearch و Logstash و Kibana مع خدمات الإعداد المساعدة
+# ===================================================================
+
 services:
 
-  # The 'setup' service runs a one-off script which initializes users inside
-  # Elasticsearch — such as 'logstash_internal' and 'kibana_system' — with the
-  # values of the passwords defined in the '.env' file. It also creates the
-  # roles required by some of these users.
+  # ===================================================================
+  # خدمة الإعداد الأولي (Setup Service)
+  # ===================================================================
+  # هذه الخدمة تقوم بتشغيل سكريبت لمرة واحدة فقط لإعداد المستخدمين والأدوار
+  # في Elasticsearch مثل 'logstash_internal' و 'kibana_system'
+  # باستخدام كلمات المرور المحددة في ملف '.env'
   #
-  # This task only needs to be performed once, during the *initial* startup of
-  # the stack. Any subsequent run will reset the passwords of existing users to
-  # the values defined inside the '.env' file, and the built-in roles to their
-  # default permissions.
-  #
-  # By default, it is excluded from the services started by 'docker compose up'
-  # due to the non-default profile it belongs to. To run it, either provide the
-  # '--profile=setup' CLI flag to Compose commands, or "up" the service by name
-  # such as 'docker compose up setup'.
+  # ملاحظات مهمة:
+  # - تحتاج للتشغيل مرة واحدة فقط عند بدء التشغيل الأول
+  # - أي تشغيل لاحق سيعيد تعيين كلمات المرور للقيم المحددة في '.env'
+  # - مستبعدة افتراضياً من 'docker compose up'
+  # - للتشغيل: استخدم '--profile=setup' أو 'docker compose up setup'
+  # ===================================================================
   setup:
     profiles:
-      - setup
+      - setup                                    # تحديد البروفايل المطلوب لتشغيل هذه الخدمة
     build:
-      context: setup/
+      context: setup/                          # مجلد البناء الذي يحتوي على Dockerfile
       args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    init: true
-    volumes:
-      - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
-      - ./setup/lib.sh:/lib.sh:ro,Z
-      - ./setup/roles:/roles:ro,Z
-    environment:
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
-      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
-      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
-      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
-      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
-    network_mode: service:elasticsearch
-    depends_on:
-      - elasticsearch
+        ELASTIC_VERSION: ${ELASTIC_VERSION}    # إصدار Elasticsearch المستخدم من متغير البيئة
+    init: true                                 # تفعيل init process لإدارة العمليات بشكل صحيح
+    volumes:                                   # ربط الملفات والمجلدات من النظام المضيف
+      - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z    # سكريبت نقطة الدخول (للقراءة فقط)
+      - ./setup/lib.sh:/lib.sh:ro,Z                  # مكتبة الدوال المساعدة (للقراءة فقط)
+      - ./setup/roles:/roles:ro,Z                    # ملفات تعريف الأدوار (للقراءة فقط)
+    environment:                               # متغيرات البيئة المطلوبة للإعداد
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}                    # كلمة مرور المستخدم الرئيسي
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}  # كلمة مرور Logstash الداخلية
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}        # كلمة مرور نظام Kibana
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}  # كلمة مرور Metricbeat
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}      # كلمة مرور Filebeat
+      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}    # كلمة مرور Heartbeat
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}  # كلمة مرور المراقبة
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}          # كلمة مرور نظام Beats
+    network_mode: service:elasticsearch        # استخدام نفس شبكة خدمة Elasticsearch
+    depends_on:                               # الاعتماد على خدمات أخرى
+      - elasticsearch                         # يجب تشغيل Elasticsearch أولاً
 
-  # The 'kibana-genkeys' service runs a one-off command which generates and
-  # prints encryption keys for Kibana.
+  # ===================================================================
+  # خدمة توليد مفاتيح التشفير لـ Kibana (Kibana Encryption Keys Generator)
+  # ===================================================================
+  # هذه الخدمة تقوم بتشغيل أمر لمرة واحدة لتوليد وطباعة مفاتيح التشفير
+  # المطلوبة لـ Kibana لحماية البيانات الحساسة
   #
-  # By default, it is excluded from the services started by 'docker compose up'
-  # due to the non-default profile it belongs to. To run it, either provide the
-  # '--profile=setup' CLI flag to Compose commands, or "up" the service by name
-  # such as 'docker compose up kibana-genkeys'.
+  # ملاحظات:
+  # - مستبعدة افتراضياً من 'docker compose up'
+  # - للتشغيل: استخدم '--profile=setup' أو 'docker compose up kibana-genkeys'
+  # ===================================================================
   kibana-genkeys:
     profiles:
-      - setup
+      - setup                                    # تحديد البروفايل المطلوب (setup)
     build:
-      context: kibana/
+      context: kibana/                         # مجلد البناء الخاص بـ Kibana
       args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    command:
-      - bin/kibana-encryption-keys
-      - generate
-    network_mode: none
+        ELASTIC_VERSION: ${ELASTIC_VERSION}    # إصدار Elasticsearch المتوافق
+    command:                                   # الأمر المطلوب تنفيذه
+      - bin/kibana-encryption-keys             # تشغيل أداة توليد مفاتيح التشفير
+      - generate                               # أمر التوليد
+    network_mode: none                        # لا تحتاج اتصال شبكة
 
+  # ===================================================================
+  # خدمة Elasticsearch (محرك البحث والفهرسة)
+  # ===================================================================
+  # Elasticsearch هو محرك البحث والتحليل الموزع المبني على Apache Lucene
+  # يقوم بتخزين وفهرسة وتحليل البيانات بسرعة عالية
+  # ===================================================================
   elasticsearch:
     build:
-      context: elasticsearch/
+      context: elasticsearch/                  # مجلد البناء الخاص بـ Elasticsearch
       args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-      - elasticsearch:/usr/share/elasticsearch/data:Z
-    ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      node.name: elasticsearch
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-      # Bootstrap password.
-      # Used to initialize the keystore during the initial startup of
-      # Elasticsearch. Ignored on subsequent runs.
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/bootstrap-checks
-      discovery.type: single-node
+        ELASTIC_VERSION: ${ELASTIC_VERSION}    # إصدار Elasticsearch المطلوب
+    volumes:                                   # ربط الملفات والبيانات
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z  # ملف الإعدادات (للقراءة فقط)
+      - elasticsearch:/usr/share/elasticsearch/data:Z    # مجلد البيانات المستمرة
+    ports:                                     # المنافذ المكشوفة
+      - 9200:9200                             # منفذ HTTP API الرئيسي للاستعلامات
+      - 9300:9300                             # منفذ النقل للتواصل بين العقد
+    environment:                               # متغيرات البيئة
+      node.name: bms-elasticsearch-node        # اسم العقدة في الكلاستر
+      ES_JAVA_OPTS: -Xms8g -Xmx8g            # تحسين الذاكرة: 8GB للاستفادة من موارد VPS
+      # كلمة مرور Bootstrap للتهيئة الأولية
+      # تستخدم لتهيئة keystore عند بدء التشغيل الأول فقط
+      # يتم تجاهلها في التشغيلات اللاحقة
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}  # كلمة مرور المستخدم الرئيسي
+      # استخدام اكتشاف العقدة الواحدة لتعطيل وضع الإنتاج وتجنب فحوصات Bootstrap
+      # راجع: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/bootstrap-checks
+      discovery.type: single-node              # نوع الاكتشاف (عقدة واحدة للتطوير)
+      # إعدادات تحسين الأداء
+      indices.memory.index_buffer_size: 20%
+      indices.memory.min_index_buffer_size: 96mb
+      # تحسين الفهرسة والبحث
+      index.refresh_interval: 30s
+      index.number_of_shards: 1
+      index.number_of_replicas: 0
+    deploy:
+      resources:
+        limits:
+          memory: 12g                          # حد أقصى 12GB للذاكرة
+          cpus: '4.0'                         # حد أقصى 4 أنوية من المعالج
+        reservations:
+          memory: 8g                           # حجز 8GB من الذاكرة
+          cpus: '2.0'                         # حجز 2 أنوية من المعالج
     networks:
-      - elk
-    restart: unless-stopped
+      - elk                                    # الشبكة المشتركة مع باقي خدمات ELK
+    restart: unless-stopped                    # إعادة التشغيل التلقائي إلا في حالة الإيقاف اليدوي
 
+  # ===================================================================
+  # خدمة Logstash (معالج ومحول البيانات)
+  # ===================================================================
+  # Logstash هو أداة معالجة البيانات من جانب الخادم تقوم بجمع البيانات
+  # من مصادر متعددة، تحويلها، وإرسالها إلى وجهات مختلفة مثل Elasticsearch
+  # ===================================================================
   logstash:
     build:
-      context: logstash/
+      context: logstash/                       # مجلد البناء الخاص بـ Logstash
       args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
-      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro,Z
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
-      - ./logstash/drivers:/usr/share/logstash/drivers:ro,Z
-    ports:
-      - 5044:5044
-      - 50000:50000/tcp
-      - 50000:50000/udp
-      - 9600:9600
-    environment:
-      LS_JAVA_OPTS: -Xms256m -Xmx256m
-      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+        ELASTIC_VERSION: ${ELASTIC_VERSION}    # إصدار متوافق مع Elasticsearch
+    volumes:                                   # ربط ملفات الإعدادات والبيانات
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z      # ملف الإعدادات الرئيسي
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro,Z    # إعدادات خطوط المعالجة
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z                            # ملفات خطوط المعالجة
+      - ./logstash/drivers:/usr/share/logstash/drivers:ro,Z                              # تعريفات قواعد البيانات
+    ports:                                     # المنافذ المكشوفة
+      - 5044:5044                             # منفذ Beats input (Filebeat, Metricbeat)
+      - 50000:50000/tcp                       # منفذ TCP للبيانات المخصصة
+      - 50000:50000/udp                       # منفذ UDP للبيانات المخصصة
+      - 9600:9600                             # منفذ API للمراقبة والإدارة
+    environment:                               # متغيرات البيئة
+      LS_JAVA_OPTS: -Xms4g -Xmx4g             # تحسين الذاكرة: 4GB للمعالجة السريعة
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}  # كلمة مرور للاتصال بـ Elasticsearch
+    deploy:
+      resources:
+        limits:
+          memory: 6g                           # حد أقصى 6GB للذاكرة
+          cpus: '2.0'                         # حد أقصى 2 أنوية من المعالج
+        reservations:
+          memory: 4g                           # حجز 4GB من الذاكرة
+          cpus: '1.0'                         # حجز 1 نواة من المعالج
     networks:
-      - elk
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
+      - elk                                    # الشبكة المشتركة
+    depends_on:                               # الاعتماد على خدمات أخرى
+      - elasticsearch                         # يحتاج Elasticsearch للعمل أولاً
+    restart: unless-stopped                    # إعادة التشغيل التلقائي
 
+  # ===================================================================
+  # خدمة Kibana (واجهة المستخدم والتصور)
+  # ===================================================================
+  # Kibana هو أداة تصور البيانات وإدارة Elasticsearch
+  # يوفر واجهة ويب لاستكشاف وتحليل وتصور البيانات المخزنة في Elasticsearch
+  # ===================================================================
   kibana:
     build:
-      context: kibana/
+      context: kibana/                         # مجلد البناء الخاص بـ Kibana
       args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
-    ports:
-      - 5601:5601
-    environment:
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+        ELASTIC_VERSION: ${ELASTIC_VERSION}    # إصدار متوافق مع Elasticsearch
+    volumes:                                   # ربط ملفات الإعدادات
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z  # ملف الإعدادات الرئيسي
+    ports:                                     # المنافذ المكشوفة
+      - 5601:5601                             # منفذ واجهة الويب الرئيسي
+    environment:                               # متغيرات البيئة
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}  # كلمة مرور نظام Kibana للاتصال بـ Elasticsearch
+    deploy:
+      resources:
+        limits:
+          memory: 4g                           # حد أقصى 4GB للذاكرة
+          cpus: '1.0'                         # حد أقصى 1 نواة من المعالج
+        reservations:
+          memory: 2g                           # حجز 2GB من الذاكرة
+          cpus: '0.5'                         # حجز نصف نواة من المعالج
     networks:
-      - elk
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
+      - elk                                    # الشبكة المشتركة
+    depends_on:                               # الاعتماد على خدمات أخرى
+      - elasticsearch                         # يحتاج Elasticsearch للعمل أولاً
+    restart: unless-stopped                    # إعادة التشغيل التلقائي
 
+# ===================================================================
+# إعدادات الشبكات (Networks Configuration)
+# ===================================================================
+# تعريف الشبكات المستخدمة للتواصل بين الخدمات
+# ===================================================================
 networks:
-  elk:
-    driver: bridge
+  elk:                                       # شبكة ELK المشتركة
+    driver: bridge                           # نوع الشبكة (bridge للتواصل المحلي)
 
+# ===================================================================
+# إعدادات المجلدات المستمرة (Persistent Volumes)
+# ===================================================================
+# تعريف المجلدات التي تحتفظ بالبيانات حتى بعد إعادة تشغيل الحاويات
+# ===================================================================
 volumes:
-  elasticsearch:
+  elasticsearch:                             # مجلد بيانات Elasticsearch المستمر
